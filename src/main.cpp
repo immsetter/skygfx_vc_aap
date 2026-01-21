@@ -13,8 +13,8 @@ int gtaversion = -1;
 void enableTrailsSetting(void);
 void patchWater(void);
 
-char*
-getpath(char *path)
+const char*
+getpath(const char *path)
 {
 	static char tmppath[MAX_PATH];
 	FILE *f;
@@ -542,6 +542,55 @@ CMBlur__MotionBlurRenderIII(RwCamera *cam, RwUInt8 red, RwUInt8 green, RwUInt8 b
 	if(config.trailsSwitch < 0) config.trailsSwitch = 0;
 	if(config.disableColourOverlay)
 		return;
+
+	enum
+	{
+		MOTION_BLUR_NONE = 0,
+		MOTION_BLUR_SNIPER,
+		MOTION_BLUR_LIGHT_SCENE,
+		MOTION_BLUR_SECURITY_CAM,
+		MOTION_BLUR_CUT_SCENE,
+		MOTION_BLUR_INTRO,
+		MOTION_BLUR_INTRO2,
+		MOTION_BLUR_SNIPER_ZOOM,
+		MOTION_BLUR_INTRO3,
+		MOTION_BLUR_INTRO4,
+	};
+
+	switch (type)
+	{
+	case MOTION_BLUR_SECURITY_CAM:
+		red = 0;
+		green = 255;
+		blue = 0;
+		alpha = 128;
+		break;
+	case MOTION_BLUR_INTRO:
+		red = 100;
+		green = 220;
+		blue = 230;
+		alpha = 158;
+		break;
+	case MOTION_BLUR_INTRO2:
+		red = 80;
+		green = 255;
+		blue = 230;
+		alpha = 138;
+		break;
+	case MOTION_BLUR_INTRO3:
+		red = 255;
+		green = 60;
+		blue = 60;
+		alpha = 200;
+		break;
+	case MOTION_BLUR_INTRO4:
+		red = 255;
+		green = 180;
+		blue = 180;
+		alpha = 128;
+		break;
+	}
+
 	switch(config.trailsSwitch){
 	default:
 	case 0: CMBlur__MotionBlurRenderIII_orig(cam, red, green, blue, alpha, type, bluralpha); break;
@@ -603,7 +652,7 @@ RenderEffectsHook(void)
 
 int dontnag;
 void
-errorMessage(char *msg)
+errorMessage(const char *msg)
 {
 	if(dontnag) return;
 	MessageBox(NULL, msg, "Error - SkyGFX", MB_ICONERROR | MB_OK);
@@ -621,22 +670,22 @@ readhex(const char *str)
 }
 
 int
-readint(const std::string &s, int default = 0)
+readint(const std::string &s, int def = 0)
 {
 	try{
 		return std::stoi(s);
 	}catch(...){
-		return default;
+		return def;
 	}
 }
 
 float
-readfloat(const std::string &s, float default = 0)
+readfloat(const std::string &s, float def = 0)
 {
 	try{
 		return std::stof(s);
 	}catch(...){
-		return default;
+		return def;
 	}
 }
 
@@ -732,6 +781,7 @@ delayedPatches(int a, int b)
 
 
 		DebugMenuAddVarBool8("SkyGFX|ScreenFX", "Enable YCbCr tweak", (int8_t*)&ScreenFX::m_bYCbCrFilter, nil);
+		DebugMenuAddVar("SkyGFX", "GlossPipeIntensity", &config.currentGlossPipeIntensity, nil, 0.1f, 0.0f, 10.0f);
 		DebugMenuAddVar("SkyGFX|ScreenFX", "Y scale", &ScreenFX::m_lumaScale, nil, 0.004f, 0.0f, 10.0f);
 		DebugMenuAddVar("SkyGFX|ScreenFX", "Y offset", &ScreenFX::m_lumaOffset, nil, 0.004f, -1.0f, 1.0f);
 		DebugMenuAddVar("SkyGFX|ScreenFX", "Cb scale", &ScreenFX::m_cbScale, nil, 0.004f, 0.0f, 10.0f);
@@ -775,7 +825,8 @@ patch(void)
 	config.trailsBlur = 1;
 	config.trailsMotionBlur = 1;
 	config.currentBlurAlpha = 39.0f;
-	config.currentBlurOffset = 2.1f;
+	config.currentBlurOffset = 4.1f;
+	config.currentGlossPipeIntensity = 1.0f;
 
 	// Fail if RenderWare has already been started
 	if(Scene.camera){
